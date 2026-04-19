@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+  <defs>
+    <style>
+      .title { font: 700 28px 'Times New Roman', serif; fill: #0b0b0b; }
+      .h2 { font: 600 18px 'Times New Roman', serif; fill: #0b0b0b; }
+      .label { font: 14px 'Times New Roman', serif; fill: #0b0b0b; }
+      .small { font: 12px 'Times New Roman', serif; fill: #0b0b0b; }
+      .box { fill: #f6f1e7; stroke: #2b2b2b; stroke-width: 2; }
+      .box-alt { fill: #e9f1f4; stroke: #2b2b2b; stroke-width: 2; }
+      .box-test { fill: #f1e9f4; stroke: #2b2b2b; stroke-width: 2; }
+      .arrow { stroke: #1f1f1f; stroke-width: 2.2; fill: none; marker-end: url(#arrowhead); }
+      .dashed { stroke-dasharray: 6 6; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+      <polygon points="0,0 10,4 0,8" fill="#1f1f1f" />
+    </marker>
+  </defs>
+
+  <rect width="1200" height="760" fill="#fbf8f2" />
+
+  <text x="40" y="50" class="title">Ring Buffer Architecture</text>
+  <text x="40" y="80" class="small">Targets: ring buffer library, app usage, and test interactions</text>
+
+  <!-- Library core -->
+  <rect x="60" y="140" width="520" height="520" rx="12" class="box" />
+  <text x="80" y="175" class="h2">Library: ring_buffer.c / ring_buffer.h</text>
+
+  <text x="90" y="210" class="label">Core state</text>
+  <rect x="90" y="225" width="460" height="78" rx="8" class="box-alt" />
+  <text x="110" y="250" class="small">RingBuffer struct</text>
+  <text x="110" y="270" class="small">- buffer (char*)</text>
+  <text x="260" y="270" class="small">- capacity (size_t)</text>
+  <text x="110" y="288" class="small">- head, tail (size_t)</text>
+  <text x="260" y="288" class="small">- count (size_t)</text>
+
+  <text x="90" y="335" class="label">Initialization &amp; lifecycle</text>
+  <rect x="90" y="350" width="460" height="60" rx="8" class="box-alt" />
+  <text x="110" y="375" class="small">ring_buffer_init, ring_buffer_free, ring_buffer_clear, ring_buffer_resize</text>
+
+  <text x="90" y="430" class="label">Read / Write</text>
+  <rect x="90" y="445" width="460" height="70" rx="8" class="box-alt" />
+  <text x="110" y="470" class="small">ring_buffer_write, ring_buffer_read, ring_buffer_peek</text>
+  <text x="110" y="490" class="small">ring_buffer_bulk_write, ring_buffer_bulk_read</text>
+
+  <text x="90" y="535" class="label">Queries</text>
+  <rect x="90" y="550" width="460" height="70" rx="8" class="box-alt" />
+  <text x="110" y="575" class="small">ring_buffer_is_empty, ring_buffer_is_full</text>
+  <text x="110" y="595" class="small">ring_buffer_size, ring_buffer_capacity, ring_buffer_available_space, ring_buffer_usage_percent</text>
+
+  <!-- App / example -->
+  <rect x="670" y="140" width="470" height="190" rx="12" class="box" />
+  <text x="690" y="175" class="h2">Application: main.c</text>
+  <text x="690" y="205" class="small">Uses RingBuffer API to demonstrate</text>
+  <text x="690" y="225" class="small">typical initialization, writes, reads</text>
+  <text x="690" y="245" class="small">and output (ring_buffer_app).</text>
+
+  <!-- Tests -->
+  <rect x="670" y="390" width="470" height="270" rx="12" class="box-test" />
+  <text x="690" y="425" class="h2">Tests: ring_buffer_tests.c</text>
+  <text x="690" y="455" class="small">CTest target: ring_buffer_tests</text>
+  <text x="690" y="475" class="small">Validates behavior of API calls,</text>
+  <text x="690" y="495" class="small">including boundary conditions and</text>
+  <text x="690" y="515" class="small">bulk operations.</text>
+
+  <!-- Arrows -->
+  <path d="M 580 210 C 620 210, 620 210, 660 210" class="arrow" />
+  <path d="M 580 470 C 620 470, 620 470, 660 470" class="arrow" />
+
+  <!-- Build/Test flow -->
+  <rect x="60" y="680" width="1080" height="60" rx="10" class="box-alt" />
+  <text x="80" y="715" class="small">Build/Test flow: CMake builds ring_buffer_app and ring_buffer_tests. CTest runs ring_buffer_tests (or `cmake --build build --target check`).</text>
+
+  <!-- Legend -->
+  <rect x="910" y="20" width="230" height="90" rx="10" class="box-alt" />
+  <text x="930" y="45" class="small">Legend</text>
+  <rect x="930" y="55" width="18" height="12" class="box" />
+  <text x="955" y="65" class="small">Library / App</text>
+  <rect x="930" y="75" width="18" height="12" class="box-test" />
+  <text x="955" y="85" class="small">Tests</text>
+</svg>
