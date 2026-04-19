@@ -145,6 +145,13 @@ double ring_buffer_usage_percent(RingBuffer *rb) {
     return ((double) rb->count / rb->capacity) * 100.0;
 }
 
+int ring_buffer_write_record(RingBuffer *rb, const char *data, size_t len) {
+    if (!rb || !data) return -1;
+    int ret = ring_buffer_bulk_write(rb, data, len);
+    if (ret != 0) return ret;
+    return ring_buffer_write(rb, RING_BUFFER_RECORD_SEP);
+}
+
 int ring_buffer_resize(RingBuffer *rb, size_t new_capacity) {
     if (rb == NULL || new_capacity == 0) {
         return -1;

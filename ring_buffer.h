@@ -10,6 +10,8 @@
 
 #include <stddef.h>
 
+#define RING_BUFFER_RECORD_SEP ','
+
 // A simple ring (circular) buffer for storing characters.
 typedef struct {
     char *buffer;      // dynamically allocated buffer
@@ -55,5 +57,9 @@ double ring_buffer_usage_percent(RingBuffer *rb);
 // if the new capacity is smaller than the current number of elements.
 // Returns 0 on success or -1 on error.
 int ring_buffer_resize(RingBuffer *rb, size_t new_capacity);
+
+// Write data as a record: appends len bytes then RING_BUFFER_RECORD_SEP.
+// Returns 0 on success, -1 on error.
+int ring_buffer_write_record(RingBuffer *rb, const char *data, size_t len);
 
 #endif // RING_BUFFER_H

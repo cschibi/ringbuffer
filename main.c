@@ -31,10 +31,11 @@ void print_buffer(RingBuffer *rb) {
         printf("Ring buffer is empty.\n");
         return;
     }
-    printf("Buffer contents: ");
+    printf("Buffer contents:\n");
     size_t idx = rb->tail;
     for (size_t i = 0; i < rb->count; i++) {
-        printf("%c", rb->buffer[idx]);
+        char c = rb->buffer[idx];
+        printf("%c", c == RING_BUFFER_RECORD_SEP ? '\n' : c);
         idx = (idx + 1) % rb->capacity;
     }
     printf("\n");
@@ -101,7 +102,7 @@ int main(int argc, char *argv[]) {
             } else {
                 // Get Start Tiime
 				gettimeofday(&start, &tz);
-                if (ring_buffer_bulk_write(&rb, data, strlen(data)) != 0) {
+                if (ring_buffer_write_record(&rb, data, strlen(data)) != 0) {
                     printf("Error writing data to ring buffer.\n");
                 } else {
                     printf("Data written to ring buffer.\n");
