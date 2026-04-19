@@ -244,6 +244,35 @@ static void test_resize_zero(void) {
     ring_buffer_free(&rb);
 }
 
+static void test_write_record(void) {
+    RingBuffer rb;
+    ring_buffer_init(&rb, 20);
+    expect_int_eq("write_record_hello", ring_buffer_write_record(&rb, "hello", 5), 0);
+    expect_size_eq("write_record_size_1", ring_buffer_size(&rb), 6);
+    expect_int_eq("write_record_world", ring_buffer_write_record(&rb, "world", 5), 0);
+    expect_size_eq("write_record_size_2", ring_buffer_size(&rb), 12);
+    char out[16] = {0};
+    int n = ring_buffer_bulk_read(&rb, out, 12);
+    out[n] = '\0';
+    expect_int_eq("write_record_count", n, 12);
+    expect_str_eq("write_record_str", out, "hello,world,");
+    ring_buffer_free(&rb);
+}
+
+static void test_write_record_overwrite(void) {
+    RingBuffer rb;
+    ring_buffer_init(&rb, 6);
+    ring_buffer_write_record(&rb, "abc", 3); // stores "abc," — 4 bytes, 2 remain
+    ring_buffer_write_record(&rb, "xyz", 3); // needs 4 more; overwrites 2 oldest bytes
+    expect_size_eq("write_record_ow_full", ring_buffer_size(&rb), 6);
+    char out[8] = {0};
+    int n = ring_buffer_bulk_read(&rb, out, 6);
+    out[n] = '\0';
+    expect_int_eq("write_record_ow_count", n, 6);
+    expect_str_eq("write_record_ow_str", out, "c,xyz,");
+    ring_buffer_free(&rb);
+}
+
 static void test_null_safety(void) {
     expect_int_eq("null_empty", ring_buffer_is_empty(NULL), 1);
     expect_int_eq("null_full", ring_buffer_is_full(NULL), 0);
@@ -276,6 +305,8 @@ int main(void) {
     test_resize_with_wraparound();
     test_resize_zero();
     test_null_safety();
+    test_write_record();
+    test_write_record_overwrite();
 
     if (tests_failed == 0) {
         printf("[PASS] %d tests\n", tests_run);
