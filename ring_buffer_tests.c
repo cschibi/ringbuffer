@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "ring_buffer.h"
 
@@ -273,6 +274,34 @@ static void test_write_record_overwrite(void) {
     ring_buffer_free(&rb);
 }
 
+static void test_dump_csv(void) {
+    RingBuffer rb;
+    ring_buffer_init(&rb, 30);
+    ring_buffer_write_record(&rb, "hello", 5);
+    ring_buffer_write_record(&rb, "world", 5);
+
+    const char *tmpfile = "/tmp/rb_test_dump.csv";
+    expect_int_eq("dump_csv_ok", ring_buffer_dump_csv(&rb, tmpfile), 0);
+
+    FILE *fp = fopen(tmpfile, "r");
+    if (!fp) {
+        tests_run++; tests_failed++;
+        printf("[FAIL] dump_csv_open: could not open output file\n");
+        ring_buffer_free(&rb);
+        return;
+    }
+    char line[64];
+    fgets(line, sizeof(line), fp); line[strcspn(line, "\n")] = '\0';
+    expect_str_eq("dump_csv_header", line, "record");
+    fgets(line, sizeof(line), fp); line[strcspn(line, "\n")] = '\0';
+    expect_str_eq("dump_csv_row1", line, "hello");
+    fgets(line, sizeof(line), fp); line[strcspn(line, "\n")] = '\0';
+    expect_str_eq("dump_csv_row2", line, "world");
+    fclose(fp);
+    remove(tmpfile);
+    ring_buffer_free(&rb);
+}
+
 static void test_null_safety(void) {
     expect_int_eq("null_empty", ring_buffer_is_empty(NULL), 1);
     expect_int_eq("null_full", ring_buffer_is_full(NULL), 0);
@@ -307,6 +336,7 @@ int main(void) {
     test_null_safety();
     test_write_record();
     test_write_record_overwrite();
+    test_dump_csv();
 
     if (tests_failed == 0) {
         printf("[PASS] %d tests\n", tests_run);
