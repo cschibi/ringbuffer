@@ -62,4 +62,9 @@ int ring_buffer_resize(RingBuffer *rb, size_t new_capacity);
 // Returns 0 on success, -1 on error.
 int ring_buffer_write_record(RingBuffer *rb, const char *data, size_t len);
 
+// Dump ring buffer contents to a CSV file (one record per line, header row included).
+// Records are delimited by RING_BUFFER_RECORD_SEP in the buffer.
+// Returns 0 on success, -1 on error.
+int ring_buffer_dump_csv(RingBuffer *rb, const char *filename);
+
 #endif // RING_BUFFER_H

@@ -9,6 +9,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <syslog.h>
+#include <time.h>
 #include "ring_buffer.h"
 
 void print_menu() {
@@ -20,6 +21,7 @@ void print_menu() {
     printf("  s          - Show current size of ring buffer\n");
     printf("  a          - Show available space and usage percentage\n");
     printf("  p          - Print all contents of ring buffer\n");
+    printf("  d          - Dump ring buffer to CSV file and clear\n");
     printf("  c          - Clear the ring buffer\n");
     printf("  z <cap>    - Resize the ring buffer to new capacity\n");
     printf("  q          - Quit\n");
@@ -177,9 +179,33 @@ int main(int argc, char *argv[]) {
             syslog(LOG_INFO, "print buffer contents initiated."); 
             print_buffer(&rb);
         } else if (command == 'm') {
-           print_menu();
-        } 
-        else if (command == 'c') {
+            print_menu();
+        } else if (command == 'd') {
+            syslog(LOG_INFO, "dump to CSV initiated.");
+            printf("Enter filename prefix: ");
+            char prefix[200];
+            if (!fgets(prefix, sizeof(prefix), stdin)) continue;
+            prefix[strcspn(prefix, "\n")] = '\0';
+            if (strlen(prefix) == 0) {
+                printf("No prefix provided.\n");
+            } else {
+                time_t now = time(NULL);
+                struct tm *tm_info = localtime(&now);
+                char filename[256];
+                snprintf(filename, sizeof(filename), "%s_%04d%02d%02d_%02d%02d%02d.csv",
+                    prefix,
+                    tm_info->tm_year + 1900, tm_info->tm_mon + 1, tm_info->tm_mday,
+                    tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec);
+                if (ring_buffer_dump_csv(&rb, filename) != 0) {
+                    printf("Error writing CSV file.\n");
+                    syslog(LOG_INFO, "dump to CSV failed.");
+                } else {
+                    printf("Dumped to %s\n", filename);
+                    ring_buffer_clear(&rb);
+                    syslog(LOG_INFO, "dump to CSV complete, buffer cleared.");
+                }
+            }
+        } else if (command == 'c') {
             syslog(LOG_INFO, "clear buffer request initiated."); 
             gettimeofday(&start, &tz);
             ring_buffer_clear(&rb);
