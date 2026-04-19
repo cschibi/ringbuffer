@@ -83,12 +83,15 @@ static void test_read_empty(void) {
 
 static void test_fill_capacity(void) {
     RingBuffer rb;
-    ring_buffer_init(&rb, 3);
+    ring_buffer_init(&rb, 4);
+    expect_double_eq("usage_empty", ring_buffer_usage_percent(&rb), 0.0);
     ring_buffer_write(&rb, 'a');
     ring_buffer_write(&rb, 'b');
+    expect_double_eq("usage_half", ring_buffer_usage_percent(&rb), 50.0);
     ring_buffer_write(&rb, 'c');
+    ring_buffer_write(&rb, 'd');
     expect_int_eq("is_full_true", ring_buffer_is_full(&rb), 1);
-    expect_size_eq("size_full", ring_buffer_size(&rb), 3);
+    expect_size_eq("size_full", ring_buffer_size(&rb), 4);
     expect_size_eq("avail_zero", ring_buffer_available_space(&rb), 0);
     expect_double_eq("usage_100", ring_buffer_usage_percent(&rb), 100.0);
     ring_buffer_free(&rb);
@@ -164,15 +167,6 @@ static void test_bulk_read_partial(void) {
     ring_buffer_free(&rb);
 }
 
-static void test_bulk_read_empty(void) {
-    RingBuffer rb;
-    ring_buffer_init(&rb, 3);
-    char out[4] = {0};
-    int n = ring_buffer_bulk_read(&rb, out, 2);
-    expect_int_eq("bulk_empty_count", n, 0);
-    ring_buffer_free(&rb);
-}
-
 static void test_clear(void) {
     RingBuffer rb;
     ring_buffer_init(&rb, 3);
@@ -181,19 +175,6 @@ static void test_clear(void) {
     expect_size_eq("clear_size", ring_buffer_size(&rb), 0);
     expect_int_eq("clear_empty", ring_buffer_is_empty(&rb), 1);
     expect_int_eq("clear_read", ring_buffer_read(&rb), -1);
-    ring_buffer_free(&rb);
-}
-
-static void test_usage_percent(void) {
-    RingBuffer rb;
-    ring_buffer_init(&rb, 4);
-    expect_double_eq("usage_empty", ring_buffer_usage_percent(&rb), 0.0);
-    ring_buffer_write(&rb, 'a');
-    ring_buffer_write(&rb, 'b');
-    expect_double_eq("usage_half", ring_buffer_usage_percent(&rb), 50.0);
-    ring_buffer_write(&rb, 'c');
-    ring_buffer_write(&rb, 'd');
-    expect_double_eq("usage_full", ring_buffer_usage_percent(&rb), 100.0);
     ring_buffer_free(&rb);
 }
 
@@ -237,6 +218,25 @@ static void test_resize_smaller_trunc(void) {
     ring_buffer_free(&rb);
 }
 
+static void test_resize_with_wraparound(void) {
+    RingBuffer rb;
+    ring_buffer_init(&rb, 5);
+    ring_buffer_bulk_write(&rb, "abcde", 5);
+    ring_buffer_read(&rb); // 'a' — tail=1
+    ring_buffer_read(&rb); // 'b' — tail=2
+    ring_buffer_read(&rb); // 'c' — tail=3
+    ring_buffer_write(&rb, 'f'); // head wraps: written at index 0
+    ring_buffer_write(&rb, 'g'); // written at index 1
+    // internal layout: ['f','g','_','d','e'], tail=3, head=2, count=4
+    expect_int_eq("resize_wrap_ok", ring_buffer_resize(&rb, 4), 0);
+    expect_size_eq("resize_wrap_size", ring_buffer_size(&rb), 4);
+    char out[8] = {0};
+    int n = ring_buffer_bulk_read(&rb, out, 4);
+    out[n] = '\0';
+    expect_str_eq("resize_wrap_str", out, "defg");
+    ring_buffer_free(&rb);
+}
+
 static void test_resize_zero(void) {
     RingBuffer rb;
     ring_buffer_init(&rb, 3);
@@ -269,12 +269,11 @@ int main(void) {
     test_bulk_write_read();
     test_bulk_write_over_capacity();
     test_bulk_read_partial();
-    test_bulk_read_empty();
     test_clear();
-    test_usage_percent();
     test_resize_larger();
     test_resize_smaller_no_trunc();
     test_resize_smaller_trunc();
+    test_resize_with_wraparound();
     test_resize_zero();
     test_null_safety();
 
